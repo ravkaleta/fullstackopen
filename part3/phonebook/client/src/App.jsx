@@ -157,6 +157,7 @@ const App = () => {
     if(confirm(`Do you really want to remove ${person.name} from the phonebook?`)){
       personService.remove(person.id)
       .then(returnedPerson => {
+        console.log('abc' + returnedPerson);
         setPersons(persons.filter(person => person.id !== returnedPerson.id))
       })
       .catch(error => {
