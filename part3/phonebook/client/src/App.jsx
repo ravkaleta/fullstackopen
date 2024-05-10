@@ -132,7 +132,7 @@ const App = () => {
         .catch(error => {
           setNotificationMessage({
             type: 'error',
-            text: `${existingPerson.name} has been already removed from the server`
+            text: error.response.data.error
           })
           setTimeout(() => {
             setNotificationMessage(null);
@@ -146,6 +146,15 @@ const App = () => {
           type: 'success',
           text: `Added ${returnedPerson.name}`
         });
+        setTimeout(() => {
+          setNotificationMessage(null);
+        }, 2000)
+      })
+      .catch(error => {
+        setNotificationMessage({
+          type: 'error',
+          text: error.response.data.error
+        })
         setTimeout(() => {
           setNotificationMessage(null);
         }, 2000)
