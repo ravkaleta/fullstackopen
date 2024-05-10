@@ -1,6 +1,7 @@
 require('dotenv').config();
 const express = require('express');
 const app = express();
+const Note = require('./models/note');
 const cors = require('cors');
 
 app.use(cors());
@@ -41,24 +42,31 @@ app.get('/', (request, response) => {
 })
 
 app.get('/api/notes', (request, response) => {
-    response.json(notes);
+    Note.find({}).then(notes => {
+        response.json(notes);
+    })
 })
 
-app.get('/api/notes/:id', (request, response) => {
-    const id = Number(request.params.id);
-    const note = notes.find(note => note.id === id);
-    if (note) {
-        response.json(note);
-    } else {
-        response.status(404).end();
-    }
+app.get('/api/notes/:id', (request, response, next) => {
+
+    Note.findById(request.params.id)
+        .then(note => {
+            if(note) {
+                response.json(note);
+            } else {
+                response.status(404).end();
+            }
+        })
+        .catch(error => next(error))
 })
 
-app.delete('/api/notes/:id', (request, response) => {
-    const id = Number(request.params.id);
-    notes = notes.filter(note => note.id !== id);
+app.delete('/api/notes/:id', (request, response, next) => {
 
-    response.status(204).end();
+    Note.findByIdAndDelete(request.params.id)
+        .then(result => {
+            response.status(204).end()
+        })
+        .catch(error => next(error))
 })
 
 const generateId = () => {
@@ -68,22 +76,34 @@ const generateId = () => {
     return maxId + 1;
 }
 
-app.post('/api/notes', (request, response) => {
+app.post('/api/notes', (request, response, next) => {
     const body = request.body;
-
-    if(!body.content) {
-        return response.status(400).json({
-            error: 'content missing'
-        })
-    }
     
-    const note = {
+    const note = new Note({
         content: body.content,
-        important: Boolean(body.important) || false,
-        id: generateId(),
-    }
-    notes = notes.concat(note);
-    response.json(note);
+        important: body.important || false,
+    })
+
+    note.save()
+        .then(savedNote => {
+            response.json(savedNote);
+        })
+        .catch(error => next(error))
+    
+})
+
+app.put('/api/notes/:id', (request, response, next) => {
+    const { content, important } = request.body;
+
+    Note.findByIdAndUpdate(
+        request.params.id,
+        { content, important},
+        { new: true, runValidators: true, context: 'query'}
+    )
+        .then(updatedNote => {
+            response.json(updatedNote);
+        })
+        .catch(error => next(error));
 })
 
 const unknownEndpoint = (request, response) => {
@@ -91,6 +111,19 @@ const unknownEndpoint = (request, response) => {
 }
 
 app.use(unknownEndpoint);
+
+const errorHandler = (error, request, response, next) => {
+    console.log(error);
+    if(error.name === 'CastError') {
+        return response.status(400).send({error: 'malformatted id'})
+    } else if(error.name === 'ValidationError') {
+        return response.status(400).json({error: error.message})
+    }
+
+    next(error);
+}
+
+app.use(errorHandler);
 
 
 const PORT = process.env.PORT || 3001;
