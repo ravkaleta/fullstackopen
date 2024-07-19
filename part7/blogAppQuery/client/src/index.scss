@@ -1,0 +1,56 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+$color-primary: #0f4c75;
+
+$color-secondary: #3282b8;
+
+$color-accent: #bbe1fa;
+
+$color-background: #1b262c;
+
+$dark-mode-colors: (
+  primary: #0f4c75,
+  secondary: #3282b8,
+  accent: #bbe1fa,
+  background: #1b262c,
+);
+
+$light-mode-colors: (
+  primary: #0f4c75,
+  secondary: #1b262c,
+  accent: #3282b8,
+  background: #bbe1fa,
+);
+
+@function color-variants($color) {
+  @return (light: lighten($color, 10%), dark: darken($color, 10%));
+}
+
+:root {
+  @each $name, $color in $light-mode-colors {
+    --color-#{$name}: #{$color};
+    @each $variant, $variant-color in color-variants($color) {
+      --color-#{$name}-#{$variant}: #{$variant-color};
+    }
+  }
+}
+
+[data-theme='dark'] {
+  @each $name, $color in $dark-mode-colors {
+    --color-#{$name}: #{$color};
+    @each $variant, $variant-color in color-variants($color) {
+      --color-#{$name}-#{$variant}: #{$variant-color};
+    }
+  }
+}
+
+[data-theme='light'] {
+  @each $name, $color in $light-mode-colors {
+    --color-#{$name}: #{$color};
+    @each $variant, $variant-color in color-variants($color) {
+      --color-#{$name}-#{$variant}: #{$variant-color};
+    }
+  }
+}
